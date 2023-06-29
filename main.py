@@ -67,4 +67,3 @@ model.__init__()
 model.training(training_set.T, training_set_answer.T, val_set.T, val_set_answer.T)
 
 
-print("Fish")

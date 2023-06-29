@@ -75,33 +75,43 @@ class Model:
         
     @staticmethod
     def calculate(self, dataPoint):
-        Z1 = self.weight1.dot(dataPoint) + self.bias1
-        A1 = map(self.sigmoid, Z1)
+        Z1 = self.weight1.T.dot(i) + self.bias1
+        A1 = np.vectorize(self.sigmoid)(Z1)
 
         Z2 = self.weight2.T.dot(A1) + self.bias2
-        A2 = map(self.sigmoid, Z2)
+        A2 = np.vectorize(self.sigmoid)(Z2)
 
         Z3 = self.output.T.dot(A2) + self.outputBias
-        A3 = map(self.sigmoid, Z3)
+        A3 = np.vectorize(self.sigmoid)(Z3)
 
         return A3
 
 
-    def eval(self, val_set, val_set_answer):
+    def evaluation(self, val_set, val_set_answer):
             
             transfer = 0
 
-            for i in val_set:
-                Z1 = self.weight1.T.dot(i) + self.bias1
-                A1 = map(self.sigmoid, Z1)
+            for i in range(val_set[:, 0].size): 
+
+                # Z1 = np.dot(self.weight1.T, trainingData).reshape(5, 1) + self.bias1
+                # A1 = np.vectorize(self.sigmoid)(Z1)
+
+                # Z2 = self.weight2.T.dot(A1) + self.bias2
+                # A2 = np.vectorize(self.sigmoid)(Z2)
+
+                # Z3 = self.output.T.dot(A2) + self.outputBias
+                # A3 = np.vectorize(self.sigmoid)(Z3)
+
+                Z1 = self.weight1.T.dot(val_set[i, :]).reshape(5, 1) + self.bias1
+                A1 = np.vectorize(self.sigmoid)(Z1)
 
                 Z2 = self.weight2.T.dot(A1) + self.bias2
-                A2 = map(self.sigmoid, Z2)
+                A2 = np.vectorize(self.sigmoid)(Z2)
 
                 Z3 = self.output.T.dot(A2) + self.outputBias
-                A3 = map(self.sigmoid, Z3)
+                A3 = np.vectorize(self.sigmoid)(Z3)
 
-                transfer += self.lossFunction(A3, i)
+                transfer += self.lossFunction(val_set_answer[i, :].reshape(1, 1), A3)
 
             return transfer/val_set[0].size
     
@@ -112,7 +122,7 @@ class Model:
     # Forward Prop:
     
     def forwardProp(self, trainingData):
-        Z1 = self.weight1.T.dot(trainingData) + self.bias1
+        Z1 = np.dot(self.weight1.T, trainingData).reshape(5, 1) + self.bias1
         A1 = np.vectorize(self.sigmoid)(Z1)
 
         Z2 = self.weight2.T.dot(A1) + self.bias2
@@ -134,7 +144,7 @@ class Model:
         third1 = self.deriv_sigmoid(Z3)
     
         
-        temp3 = A2.dot(third2 * third1)
+        temp3 = A2.dot(third2 * third1)  
 
         temp3Bias = third2 * third1
 
@@ -142,22 +152,25 @@ class Model:
     
         temp2Bias = ((third2 * third1).dot(self.output)).dot(A2.dot((A2 * val) + 1))
 
-        temp1 = input.dot((self.weight2.dot(((third2 * third1).dot(self.output)).dot(A2.dot((A2*-1) + 1)))).dot(A1.dot((A1*-1) + 1)))
-    
-        temp1Bias = (self.weight2.dot(((third2 * third1).dot(self.output)).dot(A2.dot((A2*-1) + 1)))).dot(A1.dot((A1*-1) + 1))
+        
+
+
+        temp1 = input.reshape(11, 1).dot(((self.weight2.dot(((third2 * third1).dot(self.output)).dot(A2.dot((A2 * val) + 1)))).dot(A1.T.dot((A1 * val) + 1))).T)
+
+        temp1Bias = (self.weight2.dot(((third2 * third1).dot(self.output)).dot(A2.dot((A2 * val) + 1)))).dot(A1.T.dot((A1 * val) + 1))
     
 
-        tempOutput = tempOutput - 0.01 * temp3
-    
-        tempOutputBias = self.tempOuputBias - 0.01 * temp3Bias
-    
-        tempWeight2 = tempWeight2 - 0.01 * temp2
-    
-        tempBias2 = tempBias2 - 0.01 * temp2Bias
+        self.tempOutput = self.tempOutput - 0.01 * temp3
 
-        tempWeight1 = tempWeight1 - 0.01 * temp1
+        self.tempOutputBias = self.tempOutputBias - 0.01 * temp3Bias
+    
+        self.tempWeight2 = self.tempWeight2 - 0.01 * temp2
+    
+        self.tempBias2 = self.tempBias2 - 0.01 * temp2Bias
 
-        tempBias1 = tempBias1 - 0.01 * temp1Bias
+        self.tempWeight1 = self.tempWeight1 - 0.01 * temp1
+
+        self.tempBias1 = self.tempBias1 - 0.01 * temp1Bias
 
 
 
@@ -167,7 +180,7 @@ class Model:
         count = 0
         loss = float()
 
-        for x in trainingData:
+        for i in range((trainingData[:, 0].size)):
             
             if count > 27:
 
@@ -185,7 +198,7 @@ class Model:
 
                 self.outputBias = self.tempOutputBias
 
-                loss = eval(val_set, val_set_answer)
+                loss = self.evaluation(val_set, val_set_answer)
 
                 epoch += 1
 
@@ -195,11 +208,13 @@ class Model:
 
 
 
-            Z1, A1, Z2, A2, Z3, A3 = self.forwardProp(x.T)
+            Z1, A1, Z2, A2, Z3, A3 = self.forwardProp(trainingData[i].T)
 
-            self.backProp(Z1, A1, Z2, A2, Z3, A3, trainingAnswer, x)
+            self.backProp(Z1, A1, Z2, A2, Z3, A3, trainingAnswer[i], trainingData[i].T)
 
-            count += 1
+            count+=1
+
+       
 
 
         # Processing and Normalizing Equations
