@@ -242,7 +242,7 @@ class Model:
 
     @staticmethod
     def lossFunction(corrVal, probability):
-        return -(corrVal*math.log(probability) + (1 - corrVal)*math.log(1-probability))
+        return -(corrVal * math.log(probability) + (1 - corrVal) * math.log(1-probability))
 
     # Derivative of the Loss Function:
     
