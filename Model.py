@@ -138,39 +138,30 @@ class Model:
 
     def backProp(self, Z1, A1, Z2, A2, Z3, A3, answer, input):
         
-        val = -1
-        
-        third2 = self.deriv_lossFunction(answer, A3)
-        third1 = self.deriv_sigmoid(Z3)
+        neuronGradient3 = np.dot(self.deriv_lossFunction(answer, A3), self.deriv_sigmoid(Z3))
+
+        temp3 = np.dot(neuronGradient3, A2)
+
+        neuronGradient2 = np.dot(neuronGradient3, self.tempOutput).dot(self.deriv_sigmoid(Z2))
+
+        temp2 = np.dot(A1, neuronGradient2)
+
+
+        neuronGradient1 = np.dot(self.deriv_sigmoid(Z1),  np.dot(neuronGradient2, self.tempWeight2.T))
     
-        
-        temp3 = A2.dot(third2 * third1)  
-
-        temp3Bias = third2 * third1
-
-        temp2 = A1.dot(((third2 * third1).dot(self.output)).dot(A2.dot((A2 * val) + 1)))
-    
-        temp2Bias = ((third2 * third1).dot(self.output)).dot(A2.dot((A2 * val) + 1))
-
-        
-
-
-        temp1 = input.reshape(11, 1).dot(((self.weight2.dot(((third2 * third1).dot(self.output)).dot(A2.dot((A2 * val) + 1)))).dot(A1.T.dot((A1 * val) + 1))).T)
-
-        temp1Bias = (self.weight2.dot(((third2 * third1).dot(self.output)).dot(A2.dot((A2 * val) + 1)))).dot(A1.T.dot((A1 * val) + 1))
-    
+        temp1 = np.dot(input.reshape(11, 1), neuronGradient1)
 
         self.tempOutput = self.tempOutput - 0.01 * temp3
 
-        self.tempOutputBias = self.tempOutputBias - 0.01 * temp3Bias
+        self.tempOutputBias = self.tempOutputBias - 0.01 * neuronGradient3
     
         self.tempWeight2 = self.tempWeight2 - 0.01 * temp2
     
-        self.tempBias2 = self.tempBias2 - 0.01 * temp2Bias
+        self.tempBias2 = self.tempBias2 - 0.01 * neuronGradient2
 
         self.tempWeight1 = self.tempWeight1 - 0.01 * temp1
 
-        self.tempBias1 = self.tempBias1 - 0.01 * temp1Bias
+        self.tempBias1 = self.tempBias1 - 0.01 * neuronGradient1
 
 
 
