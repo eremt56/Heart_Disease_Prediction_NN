@@ -31,7 +31,10 @@ class Model:
 
     tempOutput = np.zeros((1, 1))
 
-    tempOutputBias = np.zeros((1, 1))   
+    tempOutputBias = np.zeros((1, 1))  
+
+
+    lossData = np.zeros(29) 
     
 
 
@@ -45,18 +48,19 @@ class Model:
         2 Hidden Layer
         1 Output Layer'''
 
-        self.weight1[:] = (np.random.rand(11, 5) * 2) - 1
+        self.weight1[:] = (np.random.rand(11, 5))
 
-        self.bias1 = (np.random.randn(5,1)*2)-1
+        self.bias1 = (np.random.randn(5,1))
     
-        self.weight2[:] = (np.random.rand(5, 1) * 2) - 1
+        self.weight2[:] = (np.random.rand(5, 1))
     
-        self.bias2 = (np.random.randn(1,1)*2)-1
+        self.bias2 = (np.random.randn(1,1))
     
-        self.output[:] = (np.random.rand(1, 1) * 2) - 1
-    
-        self.outputBias[:] = (np.random.rand(1, 1) * 2) - 1
+        self.output[:] = (np.random.rand(1, 1))
 
+        val =  (np.random.rand(1, 1))
+    
+        self.outputBias[:] = (np.random.rand(1, 1))
         self.tempWeight1 = copy.copy(self.weight1)
         self.tempBias1 = copy.copy(self.bias1)
 
@@ -67,15 +71,9 @@ class Model:
         self.tempOutputBias = copy.copy(self.outputBias)
 
 
-
-
-
-        
-
-        
     @staticmethod
     def calculate(self, dataPoint):
-        Z1 = self.weight1.T.dot(i) + self.bias1
+        Z1 = self.weight1.T.dot(dataPoint) + self.bias1
         A1 = np.vectorize(self.sigmoid)(Z1)
 
         Z2 = self.weight2.T.dot(A1) + self.bias2
@@ -93,15 +91,6 @@ class Model:
 
             for i in range(val_set[:, 0].size): 
 
-                # Z1 = np.dot(self.weight1.T, trainingData).reshape(5, 1) + self.bias1
-                # A1 = np.vectorize(self.sigmoid)(Z1)
-
-                # Z2 = self.weight2.T.dot(A1) + self.bias2
-                # A2 = np.vectorize(self.sigmoid)(Z2)
-
-                # Z3 = self.output.T.dot(A2) + self.outputBias
-                # A3 = np.vectorize(self.sigmoid)(Z3)
-
                 Z1 = self.weight1.T.dot(val_set[i, :]).reshape(5, 1) + self.bias1
                 A1 = np.vectorize(self.sigmoid)(Z1)
 
@@ -113,7 +102,9 @@ class Model:
 
                 transfer += self.lossFunction(val_set_answer[i, :].reshape(1, 1), A3)
 
-            return transfer/val_set[0].size
+            
+
+            return transfer/val_set[:, 0].size
     
 
         
@@ -146,22 +137,23 @@ class Model:
 
         temp2 = np.dot(A1, neuronGradient2)
 
+        val = self.deriv_sigmoid(Z1)
 
-        neuronGradient1 = np.dot(self.deriv_sigmoid(Z1),  np.dot(neuronGradient2, self.tempWeight2.T))
+        neuronGradient1 = np.dot((self.deriv_sigmoid(Z1)),  np.dot(neuronGradient2, self.tempWeight2.T).T)
     
-        temp1 = np.dot(input.reshape(11, 1), neuronGradient1)
+        temp1 = np.dot(input.reshape(11, 1), neuronGradient1.T)
 
-        self.tempOutput = self.tempOutput - 0.01 * temp3
+        self.tempOutput = self.tempOutput - 0.0001 * temp3
 
-        self.tempOutputBias = self.tempOutputBias - 0.01 * neuronGradient3
+        self.tempOutputBias = self.tempOutputBias - 0.0001 * neuronGradient3
     
-        self.tempWeight2 = self.tempWeight2 - 0.01 * temp2
+        self.tempWeight2 = self.tempWeight2 - 0.0001 * temp2
     
-        self.tempBias2 = self.tempBias2 - 0.01 * neuronGradient2
+        self.tempBias2 = self.tempBias2 - 0.0001 * neuronGradient2
 
-        self.tempWeight1 = self.tempWeight1 - 0.01 * temp1
+        self.tempWeight1 = self.tempWeight1 - 0.0001 * temp1
 
-        self.tempBias1 = self.tempBias1 - 0.01 * neuronGradient1
+        self.tempBias1 = self.tempBias1 - 0.0001 * neuronGradient1
 
 
 
@@ -171,13 +163,15 @@ class Model:
         count = 0
         loss = float()
 
+        
+
         for i in range((trainingData[:, 0].size)):
             
             if count > 27:
 
                 self.weight1 = self.tempWeight1
                     
-                self.weight2= self.tempWeight2
+                self.weight2 = self.tempWeight2
 
                 self.output = self.tempOutput
 
@@ -190,6 +184,8 @@ class Model:
                 self.outputBias = self.tempOutputBias
 
                 loss = self.evaluation(val_set, val_set_answer)
+
+                self.lossData[epoch] = loss
 
                 epoch += 1
 
@@ -205,6 +201,8 @@ class Model:
 
             count+=1
 
+        plt.plot(self.lossData)
+        plt.savefig("myGraph.png")
        
 
 
@@ -225,7 +223,7 @@ class Model:
         returnArray = np.zeros(dataArray.size)
 
         for i in range(dataArray.size):
-            returnArray[i] = 2*((dataArray[i] - minimum)/(maximum - minimum))-1
+            returnArray[i] = ((dataArray[i] - minimum)/(maximum - minimum))
 
         return returnArray
 
@@ -252,7 +250,9 @@ class Model:
 
     
     def deriv_sigmoid(self, val):
-        return self.sigmoid(val) * (1-self.sigmoid(val))
+        val1 = self.sigmoid(val)
+        val2 = 1-self.sigmoid(val)
+        return np.dot(self.sigmoid(val), (1-self.sigmoid(val)).T)
 
 
     
