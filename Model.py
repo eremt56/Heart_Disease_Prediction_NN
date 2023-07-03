@@ -13,28 +13,30 @@ class Model:
     
     bias1 = np.zeros((5,1))
 
-    weight2 = np.zeros((5, 1))
+    weight2 = np.zeros((5, 5))
 
-    bias2 = np.zeros((1, 1))
+    bias2 = np.zeros((5, 1))
 
-    output = np.zeros((1, 1))
+    output = np.zeros((5, 1))
 
-    outputBias = np.zeros((1, 1))                   
+    outputBias = np.zeros((1, 1))   
+
+
 
     tempWeight1 = np.zeros((11, 5))        
     
     tempBias1 = np.zeros((5,1))
 
-    tempWeight2 = np.zeros((5, 1))
+    tempWeight2 = np.zeros((5, 5))
 
-    tempBias2 = np.zeros((1, 1))
+    tempBias2 = np.zeros((5, 1))
 
-    tempOutput = np.zeros((1, 1))
+    tempOutput = np.zeros((5, 1))
 
     tempOutputBias = np.zeros((1, 1))  
 
 
-    lossData = np.zeros(29) 
+    lossData = np.zeros(1000) 
     
 
 
@@ -48,19 +50,19 @@ class Model:
         2 Hidden Layer
         1 Output Layer'''
 
-        self.weight1[:] = (np.random.rand(11, 5))
+        self.weight1[:] = 2*(np.random.rand(11, 5))-1
 
-        self.bias1 = (np.random.randn(5,1))
+        self.bias1 = 2*(np.random.randn(5,1))-1
     
-        self.weight2[:] = (np.random.rand(5, 1))
+        self.weight2[:] = 2*(np.random.rand(5, 5))-1
     
-        self.bias2 = (np.random.randn(1,1))
+        self.bias2 = 2*(np.random.randn(5,1))-1
     
-        self.output[:] = (np.random.rand(1, 1))
+        self.output[:] = 2*(np.random.rand(5, 1))-1
+    
+        self.outputBias[:] = 2*(np.random.rand(1, 1))-1
 
-        val =  (np.random.rand(1, 1))
-    
-        self.outputBias[:] = (np.random.rand(1, 1))
+
         self.tempWeight1 = copy.copy(self.weight1)
         self.tempBias1 = copy.copy(self.bias1)
 
@@ -100,9 +102,10 @@ class Model:
                 Z3 = self.output.T.dot(A2) + self.outputBias
                 A3 = np.vectorize(self.sigmoid)(Z3)
 
-                transfer += self.lossFunction(val_set_answer[i, :].reshape(1, 1), A3)
+                hold = self.lossFunction(val_set_answer[i, :].reshape(1, 1), A3)
+                transfer+= hold
 
-            
+                
 
             return transfer/val_set[:, 0].size
     
@@ -114,10 +117,10 @@ class Model:
     
     def forwardProp(self, trainingData):
         Z1 = np.dot(self.weight1.T, trainingData).reshape(5, 1) + self.bias1
-        A1 = np.vectorize(self.sigmoid)(Z1)
+        A1 = np.vectorize(self.tanh)(Z1)
 
         Z2 = self.weight2.T.dot(A1) + self.bias2
-        A2 = np.vectorize(self.sigmoid)(Z2)
+        A2 = np.vectorize(self.tanh)(Z2)
 
         Z3 = self.output.T.dot(A2) + self.outputBias
         A3 = np.vectorize(self.sigmoid)(Z3)
@@ -129,31 +132,31 @@ class Model:
 
     def backProp(self, Z1, A1, Z2, A2, Z3, A3, answer, input):
         
-        neuronGradient3 = np.dot(self.deriv_lossFunction(answer, A3), self.deriv_sigmoid(Z3))
+        neuronGradient3 = np.dot(self.deriv_lossFunction(answer.reshape(1,1), A3), self.deriv_sigmoid(Z3).T)
 
-        temp3 = np.dot(neuronGradient3, A2)
+        temp3 = np.dot(A2, neuronGradient3.T)
 
-        neuronGradient2 = np.dot(neuronGradient3, self.tempOutput).dot(self.deriv_sigmoid(Z2))
+        neuronGradient2 = np.dot(self.deriv_tanh(Z2).T, np.dot(self.tempOutput, neuronGradient3))
 
-        temp2 = np.dot(A1, neuronGradient2)
+        temp2 = np.dot(A1, neuronGradient2.T)
 
-        val = self.deriv_sigmoid(Z1)
 
-        neuronGradient1 = np.dot((self.deriv_sigmoid(Z1)),  np.dot(neuronGradient2, self.tempWeight2.T).T)
+        neuronGradient1 = np.dot((self.deriv_tanh(Z1)).T,  np.dot(self.tempWeight2, neuronGradient2))
     
         temp1 = np.dot(input.reshape(11, 1), neuronGradient1.T)
 
-        self.tempOutput = self.tempOutput - 0.0001 * temp3
+        self.tempOutput = self.tempOutput - 0.001 * temp3
 
-        self.tempOutputBias = self.tempOutputBias - 0.0001 * neuronGradient3
+        self.tempOutputBias = self.tempOutputBias - 0.001 * neuronGradient3
     
-        self.tempWeight2 = self.tempWeight2 - 0.0001 * temp2
+        self.tempWeight2 = self.tempWeight2 - 0.001 * temp2
     
-        self.tempBias2 = self.tempBias2 - 0.0001 * neuronGradient2
+        self.tempBias2 = self.tempBias2 - 0.001 * neuronGradient2
 
-        self.tempWeight1 = self.tempWeight1 - 0.0001 * temp1
+        self.tempWeight1 = self.tempWeight1 - 0.001 * temp1
 
-        self.tempBias1 = self.tempBias1 - 0.0001 * neuronGradient1
+        self.tempBias1 = self.tempBias1 - 0.001 * neuronGradient1
+
 
 
 
@@ -163,11 +166,11 @@ class Model:
         count = 0
         loss = float()
 
-        
 
         for i in range((trainingData[:, 0].size)):
             
             if count > 27:
+                
 
                 self.weight1 = self.tempWeight1
                     
@@ -223,7 +226,7 @@ class Model:
         returnArray = np.zeros(dataArray.size)
 
         for i in range(dataArray.size):
-            returnArray[i] = ((dataArray[i] - minimum)/(maximum - minimum))
+            returnArray[i] = 2 * ((dataArray[i] - minimum)/(maximum - minimum)) - 1
 
         return returnArray
 
@@ -240,6 +243,12 @@ class Model:
         return -corrVal/probability + (1-corrVal)/(1-probability)
 
     # Activation Function:
+
+    def tanh(self, val):
+        return ((np.power(np.e, val)) - (np.power(np.e, -val))) / ((np.power(np.e, val)) + (np.power(np.e, -val)))
+
+    def deriv_tanh(self, val):
+        return 1 - (np.dot(self.tanh(val), self.tanh(val).T))
 
     @staticmethod
     def sigmoid(val):
