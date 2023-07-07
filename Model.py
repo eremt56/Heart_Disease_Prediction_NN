@@ -9,7 +9,7 @@ import copy
 # Algorithms:
 class Model:
 
-    weight1 = np.zeros((11, 5))        
+    weight1 = np.zeros((21, 5))        
     
     bias1 = np.zeros((5,1))
 
@@ -21,7 +21,7 @@ class Model:
 
 
 
-    tempWeight1 = np.zeros((11, 5))        
+    tempWeight1 = np.zeros((21, 5))        
     
     tempBias1 = np.zeros((5,1))
 
@@ -32,7 +32,7 @@ class Model:
     tempOutputBias = np.zeros((1, 1))  
 
 
-    lossData = np.zeros(150) 
+    lossData = np.zeros(150)
 
     Mt2 = 0.00
     Vt2 = 0.00
@@ -48,8 +48,6 @@ class Model:
     
     A1Rand = np.zeros((5, 1))
   
-
-    
     #initializing weights and biases:
     
     def __init__(self):
@@ -57,15 +55,15 @@ class Model:
         2 Hidden Layer
         1 Output Layer'''
 
-        self.weight1[:] = self.xavierInit(11, 5)
+        self.weight1[:] = self.xavierInit(21, 5)
 
-        self.bias1 = self.xavierInit(11, 5)
+        self.bias1 = self.xavierInit(5, 1)
     
         # 2*(np.random.rand(11, 5))-1
     
         self.output[:] = self.xavierInit(5, 1)
     
-        self.outputBias[:] = self.xavierInit(5, 1)
+        self.outputBias[:] = self.xavierInit(1, 1)
 
 
         self.tempWeight1 = copy.copy(self.weight1)
@@ -77,36 +75,22 @@ class Model:
         self.tempOutputBias = copy.copy(self.outputBias)
 
 
-    @staticmethod
-    def calculate(self, dataPoint):
-        Z1 = self.weight1.T.dot(dataPoint) + self.bias1
-        A1 = np.vectorize(self.sigmoid)(Z1)
-
-        Z3 = self.output.T.dot(A1) + self.outputBias
-        A3 = np.vectorize(self.sigmoid)(Z3)
-
-        return A3
-
-
     def evaluation(self, val_set, val_set_answer):
             
             transfer = 0
 
             for i in range(val_set[:, 0].size): 
 
-                Z1 = (0.1 * self.weight1).T.dot(val_set[i, :]).reshape(5, 1) + self.bias1
-                A1 = np.vectorize(self.tanh)(Z1)
-
+                Z1 = (self.weight1).T.dot(val_set[i, :]).reshape(5, 1) + self.bias1
+                A1 = np.vectorize(self.ReLu)(Z1)
                 
-                Z3 = (0.1 * self.output).T.dot(A1) + self.outputBias
+                Z3 = (self.output).T.dot(A1) + self.outputBias
                 A3 = np.vectorize(self.sigmoid)(Z3)
 
                 val = val_set_answer[i, :]
 
                 hold = self.lossFunction(val_set_answer[i, :].reshape(1, 1), A3)
                 transfer+= hold
-
-           
 
             return transfer/val_set[:, 0].size
     
@@ -117,16 +101,13 @@ class Model:
     # Forward Prop:
     
     def forwardProp(self, trainingData):
+
         Z1 = np.dot(self.weight1.T, trainingData).reshape(5, 1) + self.bias1
-        A1 = np.vectorize(self.tanh)(Z1)
-
-        self.A1Rand = np.random.choice(2, (5,1), True, p = [0.1, 0.9])
-
-        A1 = A1 * self.A1Rand
-
+        A1 = np.vectorize(self.ReLu)(Z1)
 
         Z3 = self.output.T.dot(A1) + self.outputBias
         A3 = np.vectorize(self.sigmoid)(Z3)
+
 
         return Z1, A1, Z3, A3
     
@@ -135,13 +116,13 @@ class Model:
 
     def backProp(self, Z1, A1, Z3, A3, answer, input):
 
-        neuronGradient3 = np.dot(self.deriv_lossFunction(answer.reshape(1,1), A3), self.deriv_sigmoid(Z3).T)
+        neuronGradient3 = np.dot(self.deriv_lossFunction(answer.reshape(1,1), A3), self.deriv_sigmoid(Z3))
 
         temp3 = np.dot(A1, neuronGradient3)
 
-        neuronGradient1 = np.dot((self.deriv_tanh(Z1)).T,  np.dot(self.tempOutput, neuronGradient3))
+        neuronGradient1 = np.dot((self.deriv_ReLu(Z1)),  np.dot(self.tempOutput, neuronGradient3))
     
-        temp1 = np.dot(input.reshape(11, 1), neuronGradient1.T)
+        temp1 = np.dot(input.reshape(21, 1), neuronGradient1.T)
 
 
         self.tempOutput = self.tempOutput - 0.01 * self.Adam(temp3, "2")
@@ -203,7 +184,7 @@ class Model:
     def normalize(self, dataArray):
         '''
         A normalization function that normalizes all of the data
-        in a 1D array between -1 and 1
+        in a 1D array between 0 and 1
         
         Args: 
         dataArray: A 1D numpy Array
@@ -216,7 +197,7 @@ class Model:
         returnArray = np.zeros(dataArray.size)
 
         for i in range(dataArray.size):
-            returnArray[i] = 2 * ((dataArray[i] - minimum)/(maximum - minimum)) - 1
+            returnArray[i] = ((dataArray[i] - minimum)/(maximum - minimum))
 
         return returnArray
 
@@ -234,21 +215,25 @@ class Model:
 
     # Activation Function:
 
-    def tanh(self, val):
-        return ((np.power(np.e, val)) - (np.power(np.e, -val))) / ((np.power(np.e, val)) + (np.power(np.e, -val)))
-
-    def deriv_tanh(self, val):
-        return 1 - (np.dot(self.tanh(val), self.tanh(val).T))
-
     @staticmethod
     def sigmoid(val):
         '''My chosen activation function for this project'''
 
-        blah = 1/(1+np.power(np.e, val))
+        blah = 1/(1+np.power(np.e, -val))
 
         return blah
+    
+    def ReLu(self, input):
+            return max(0, input)
 
     #Derivative of the Activation Function:
+    
+    def deriv_ReLu(self, input):
+
+        if input.all() < 0: return 0
+        else: return 1
+
+  
 
     
     def deriv_sigmoid(self, val):
@@ -319,10 +304,4 @@ class Model:
             return returnVal
 
     
-    def ReLu(self, input):
-            return max(0, input)
     
-    def deriv_ReLu(self, input):
-
-        if input < np.zeros(input.shape): return 0
-        else: return 1
