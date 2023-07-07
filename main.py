@@ -17,7 +17,7 @@ data=np.array(dataSetUp)
 
 m, n = data.T.shape
 
-np.random.shuffle(data)
+# np.random.shuffle(data)
 
 data_set=data.T
 
@@ -71,8 +71,8 @@ model.__init__()
 
 model.training(training_set.T, training_set_answer.T, val_set.T, val_set_answer.T)
 
-# Adjust number of neurons and layers
 #Consider other techniques I had planned to use earlier and realize their feasibility
+# when learning rate is originally low just keep weights the same or do not allow as much change?
 # talk to tahvahn
 
 
