@@ -9,6 +9,8 @@ import copy
 # Algorithms:
 class Model:
 
+    #Initialize Weight Matrix Sizes
+
     weight1 = np.zeros((21, 5))        
     
     bias1 = np.zeros((5,1))
@@ -34,6 +36,8 @@ class Model:
 
     lossData = np.zeros(150)
 
+    # Adam Optimization Value Initialization
+
     Mt2 = 0.00
     Vt2 = 0.00
 
@@ -48,10 +52,10 @@ class Model:
     
     A1Rand = np.zeros((5, 1))
   
-    #initializing weights and biases:
+   
     
     def __init__(self):
-        '''Initialize all weights and biases:
+        '''Initialize all weights and biases values:
         2 Hidden Layer
         1 Output Layer'''
 
@@ -74,6 +78,8 @@ class Model:
         self.tempOutput = copy.copy(self.output)
         self.tempOutputBias = copy.copy(self.outputBias)
 
+
+    # Evaluates the model using a validation set
 
     def evaluation(self, val_set, val_set_answer):
             
@@ -134,7 +140,7 @@ class Model:
         self.tempBias1 = self.tempBias1 - 0.01 * self.Adam(neuronGradient1, "1B")
 
 
-
+    # A training function where frontProp and backProp are called to configure weight and bias values
 
     def training(self, trainingData, trainingAnswer,  val_set, val_set_answer):
 
@@ -180,16 +186,9 @@ class Model:
        
 
 
-        # Processing and Normalizing Equations
-    def normalize(self, dataArray):
-        '''
-        A normalization function that normalizes all of the data
-        in a 1D array between 0 and 1
+    # Processing and Standardizing Equations
+    def standardize(self, dataArray):
         
-        Args: 
-        dataArray: A 1D numpy Array
-        
-        Returns: 1D array of Normalized Data'''
         
         maximum= np.amax(dataArray)
         minimum = np.amin(dataArray)
@@ -213,16 +212,16 @@ class Model:
     def deriv_lossFunction(corrVal, probability):
         return -corrVal/probability + (1-corrVal)/(1-probability)
 
-    # Activation Function:
+    # Output Activation Function:
 
-    @staticmethod
-    def sigmoid(val):
-        '''My chosen activation function for this project'''
+    def sigmoid(self, val):
 
         blah = 1/(1+np.power(np.e, -val))
 
         return blah
     
+    #Activation Function:
+
     def ReLu(self, input):
             return max(0, input)
 
@@ -234,16 +233,17 @@ class Model:
         else: return 1
 
   
-
+    #Derivative of the output Activation Function:
     
     def deriv_sigmoid(self, val):
     
         return np.dot(self.sigmoid(val), (1-self.sigmoid(val)).T)
     
+    # Xavier Weight Initialization:
     def xavierInit(self, inputs, outputs):
         return math.sqrt(6/(inputs + outputs))
 
-
+    # Adam Optimization:
     def Adam(self, weightGradient, track):
 
         B1 = 0.9
