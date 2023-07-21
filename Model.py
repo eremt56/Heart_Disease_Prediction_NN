@@ -215,10 +215,8 @@ class Model:
     # Output Activation Function:
 
     def sigmoid(self, val):
-
-        blah = 1/(1+np.power(np.e, -val))
-
-        return blah
+        return 1/(1+np.power(np.e, -val))
+         
     
     #Activation Function:
 
